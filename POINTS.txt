@@ -1,0 +1,126 @@
+reactStart library for start and its implementation
+
+
+
+
+
+
+
+
+//WORK LEFT
+->SEARCH BAR IN PRODUCT LIST AND DELETE, EDIT BOTTON
+http://localhost:4000/api/v1/products?page=2&name=Teflon Hawa&gte=10&lte=1000&category=Electornics
+
+->PASSWORD RESET
+->EDIT PROFILE  
+->showing error in creat product
+
+http://localhost:4000
+
+
+//IMPLEMENTATION LEFT
+->WRITE REVIEW
+->FORGET PASSWORD LOGIC
+->RESET PASSWORD
+image in cart
+
+-->UPDATE PASSWORD
+-OLD PASSWORD
+-NEW PASSWORD
+-CONFIRM PASSWORD
+
+-->RESET PASSWORD
+->TOKEN
+->PASSWORD
+->C PASSWORD
+
+
+13:15min cloudnary
+11:10min stripe
+13:4 create products
+
+API Secret - E9FMqESlSvXRV38zZnggUCxz1rE
+API Key - 682789527246957
+
+
+my image :https://res.cloudinary.com/dhthlbs0n/image/upload/v1719732442/vrwawafu8bdvqdpfq1c6.png
+
+import React, { Fragment } from 'react';
+import ShippingStatus from './ShippingStatus';
+import { Link } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { createOrder } from '../../reducers/OrderSlice';
+import { useNavigate } from 'react-router-dom';
+import {loadStripe} from '@stripe/stripe-js';
+
+function Payment() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { items: cartItems = [], shippingInfo = {} } = useSelector((state) => state.cart);
+
+  const itemsPrice = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const taxPrice = 0.18 * itemsPrice;
+  const shippingPrice = 20;
+  const totalPrice = itemsPrice + taxPrice + shippingPrice;
+
+  const makePayment = async ()=> {
+    // Payment information from the payment gateway
+    const strip = await loadStripe("pk_test_51PJxTxSFy5zHhVvnODDqP600Gd1JNKsKBCwkfLKvC4qUi3Auc1YgdEs0N74d7IaC2S2J98J1ADTrN6oXPWvyWPYp00ob9utkaG");
+    
+
+  };
+
+  const submitHandler = async (e) => {
+    e.preventDefault();
+    const order = {
+      shippingInfo,
+      orderItems: cartItems,
+      paymentInfo: makePayment,
+      itemsPrice,
+      taxPrice,
+      shippingPrice,
+      totalPrice,
+    };
+
+    console.log("Placing order...");
+    console.log("Order details:", order);
+
+    try {
+      const resultAction = await dispatch(createOrder(order));
+      if (createOrder.fulfilled.match(resultAction)) {
+        navigate('/success');
+      } else {
+        // Handle errors here if needed
+        console.error('Order creation failed:', resultAction.payload);
+      }
+    } catch (error) {
+      // Handle any other errors here if needed
+      console.error('Unexpected error:', error);
+    }
+  };
+
+  return (
+    <Fragment>
+      <div className='my-10 mb-[140px] min-h-80'>
+        <ShippingStatus activeStep={2} />
+        <div className='flex justify-center'>
+          <div className="mt-10 shippingContainer p-2 border-2 border-[#0000001a] w-1/4 rounded-2xl">
+            <div><h2 className='text-2xl font-bold text-center mb-5'>Your Card Info</h2></div>
+            <form onSubmit={submitHandler}>
+              <input className='border-2 border-[#0000001a] block w-full p-4 mb-8 rounded-lg' placeholder='Card Number' />
+              <input className='border-2 border-[#0000001a] block w-full p-4 mb-8 rounded-lg' placeholder='Expiry Year' />
+              <input className='border-2 border-[#0000001a] block w-full p-4 mb-4 rounded-lg' placeholder='CVV' />
+              <button type="submit" className='bg-black w-full rounded-lg p-4 font-bold text-white'
+              onClick={makePayment}
+              >
+                Pay - Rs. {totalPrice}
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </Fragment>
+  );
+}
+
+export default Payment;
